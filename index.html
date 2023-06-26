@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>X-Mail</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="icon"
+      href="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.dribbble.com%2Fusers%2F68544%2Fscreenshots%2F14608295%2Fx-dr_4x.png&f=1&nofb=1&ipt=962d98ea3bcaa1332dcf01c9e64150783c391bbfd291a0f46716559408f8aba3&ipo=images"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+    />
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        /* background-image: url("https://images.pexels.com/photos/1097456/pexels-photo-1097456.jpeg?auto=compress&cs=tinysrgb&w=1600"); */
+        background: rgb(20, 20, 20);
+      }
+
+      .container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #232b32;
+      }
+      .row-header {
+        background: #232b32;
+        padding: 10px;
+        position: absolute;
+        top: 17%;
+      }
+      body > div > div.row-header > div > img {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        margin: 0 auto;
+        display: block;
+        position: absolute;
+        top: -100px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row-header">
+        <div class="col-md-12">
+          <img
+            src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.dribbble.com%2Fusers%2F68544%2Fscreenshots%2F14608295%2Fx-dr_4x.png&f=1&nofb=1&ipt=962d98ea3bcaa1332dcf01c9e64150783c391bbfd291a0f46716559408f8aba3&ipo=images"
+          />
+          <div class="header">
+            <h1 class="text-center text-white">X-Mail</h1>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h1 class="text-center text-white">Login</h1>
+        <section
+          class="w-100 p-4 d-flex justify-content-center pb-4 text-white"
+        >
+          <form id="authForm" style="width: 22rem">
+            <!-- Email input -->
+            <div class="form-outline mb-4">
+              <input type="text" id="email" name="email" class="form-control" />
+              <label
+                class="form-label"
+                for="form2Example1"
+                style="margin-left: 0px"
+                >Email address</label
+              >
+              <div class="form-notch">
+                <div class="form-notch-leading" style="width: 9px"></div>
+                <div class="form-notch-middle" style="width: 88.8px"></div>
+                <div class="form-notch-trailing"></div>
+              </div>
+            </div>
+
+            <!-- Password input -->
+            <div class="form-outline mb-4">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                class="form-control"
+              />
+              <label
+                class="form-label"
+                for="form2Example2"
+                style="margin-left: 0px"
+                >Password</label
+              >
+              <div class="form-notch">
+                <div class="form-notch-leading" style="width: 9px"></div>
+                <div class="form-notch-middle" style="width: 64px"></div>
+                <div class="form-notch-trailing"></div>
+              </div>
+            </div>
+
+            <!-- Submit button -->
+            <button
+              type="submit"
+              class="btn btn-primary btn-block mb-4 float-end"
+            >
+              Sign in
+            </button>
+          </form>
+        </section>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    <script src="app.js"></script>
+    <script></script>
+  </body>
+</html>

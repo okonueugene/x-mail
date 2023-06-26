@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      href="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.dribbble.com%2Fusers%2F68544%2Fscreenshots%2F14608295%2Fx-dr_4x.png&f=1&nofb=1&ipt=962d98ea3bcaa1332dcf01c9e64150783c391bbfd291a0f46716559408f8aba3&ipo=images"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+    />
+    <title>Emails</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        /* background-image: url("https://images.pexels.com/photos/1097456/pexels-photo-1097456.jpeg?auto=compress&cs=tinysrgb&w=1600"); */
+        max-height: fit-content;
+      }
+      .text-center {
+        text-align: center;
+      }
+      .header {
+        background: #232b32;
+        padding: 10px;
+        height: 100px;
+      }
+      .header .navbar {
+        background: #232b32;
+      }
+      .header .navbar-brand {
+        color: #fff;
+      }
+      .header .navbar-brand:hover {
+        color: #0d6efd;
+      }
+      .header .navbar-brand:active {
+        color: #0d6efd;
+      }
+      .header .navbar-brand:focus {
+        color: #0d6efd;
+      }
+      .header .navbar-toggler {
+        border-color: #fff;
+      }
+      .header .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3e%3cpath stroke='%23fff' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+      }
+      .card {
+        margin: 0 auto;
+        margin-top: 50px;
+        width: 90%;
+        min-height: 67.5vh;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      }
+      .search {
+        margin: 20px auto;
+        margin-top: 20px;
+        width: 80%;
+        display: flex;
+        justify-content: space-between;
+      }
+      .pagination {
+        margin: 20px auto;
+        margin-top: 20px;
+        width: 80%;
+        display: flex;
+        justify-content: center;
+      }
+      .pagination button {
+        margin: 0 5px;
+      }
+      .pagination button.active {
+        background-color: #0d6efd;
+        color: white;
+      }
+      .nk-footer {
+        background-color: #232b32;
+        color: #fff;
+        padding: 20px 0;
+        height: 120px;
+      }
+      .nk-footer .nk-footer-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .nk-footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .nk-footer-links li {
+        margin: 0 5px;
+      }
+      .nk-footer-links li a {
+        color: #fff;
+      }
+      .nk-footer-links li a:hover {
+        color: #0d6efd;
+      }
+      .nk-footer-links li a:active {
+        color: #0d6efd;
+      }
+      .nk-footer-links li a:focus {
+        color: #0d6efd;
+      }
+      .modal-content {
+        background-color: #232b32;
+        color: #fff;
+      }
+      .modal-header {
+        border-bottom: 1px solid #fff;
+      }
+      .modal-title {
+        color: #fff;
+      }
+      .modal-body {
+        color: #fff;
+      }
+      .modal-footer {
+        border-top: 1px solid #fff;
+        color: #fff;
+      }
+      .modal-footer a {
+        color: #fff;
+      }
+      .modal-footer a:hover {
+        color: #0d6efd;
+      }
+      .modal-footer a:active {
+        color: #0d6efd;
+      }
+      .modal-footer a:focus {
+        color: #0d6efd;
+      }
+      .logout {
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header text-center">
+      <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid text-center">
+          <a class="navbar-brand">X-Mail</a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarTogglerDemo02"
+            aria-controls="navbarTogglerDemo02"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </div>
+        <div class="logout float-end">
+          <a href="#" onclick="logout()" class="btn btn-danger">Logout</a>
+        </div>
+      </nav>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h5 class="text-center">Emails</h5>
+      </div>
+      <div class="search">
+        <input id="subjectInput" type="text" placeholder="Subject" />
+        <input id="senderInput" type="text" placeholder="Sender" />
+        <input id="dateInput" type="date" placeholder="Date" />
+        <button id="searchButton" class="btn btn-muted">Search</button>
+      </div>
+      <div class="container">
+        <table id="emailTable" class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Sender</th>
+              <th>Date</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pagination"></div>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="exampleModal"
+      tabindex="-1"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header text-center">
+            <h5 class="modal-title text-center" id="exampleModalLabel">
+              Email Content
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              liclass
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="emailContent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nk-footer">
+      <div class="container-fluid">
+        <div class="nk-footer-wrap">
+          <div class="nk-footer-copyright"></div>
+          <div class="nk-footer-links">
+            <ul class="nav nav-sm">
+              <li class="nav-item">
+                <a class="nav-link" href="#">Terms</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Privacy</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Help</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Support</a>
+              </li>
+              <li class="nav-link text-white">
+                ©
+                <script>
+                  document.write(new Date().getFullYear());
+                </script>
+                <span>&nbsp; X-Mail </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+      // Pagination variables
+      var pageSize = 10; // Number of items per page
+      var currentPage = 1; // Current page number
+
+      // Function to format date
+      function formatDate(date) {
+        var options = { year: "numeric", month: "short", day: "numeric" };
+        return new Date(date).toLocaleDateString(undefined, options);
+      }
+
+      // Function to load email table based on filters and pagination
+      function loadEmailTable() {
+        var subject = $("#subjectInput").val().trim();
+        var sender = $("#senderInput").val().trim();
+        var date = $("#dateInput").val();
+        console.log(subject, sender, date);
+
+        // Retrieve filtered emails
+        $.ajax({
+          url: "data.json",
+          type: "GET",
+          dataType: "json",
+          success: function (data) {
+            // Apply filters
+            var filteredData = data;
+
+            if (subject) {
+              filteredData = filteredData.filter(function (email) {
+                return email.subject
+                  .toLowerCase()
+                  .includes(subject.toLowerCase());
+              });
+
+              filteredData
+                ? filteredData
+                : toastr.warning("No emails match the criteria");
+            }
+
+            if (sender) {
+              filteredData = filteredData.filter(function (email) {
+                return email.sender
+                  .toLowerCase()
+                  .includes(sender.toLowerCase());
+              });
+              filteredData
+                ? filteredData
+                : toastr.warning("No emails match the criteria");
+            }
+
+            if (date) {
+              filteredData = filteredData.filter(function (email) {
+                // Convert the email date to the format "yyyy-mm-dd"
+                var emailDate = new Date(email.date);
+                var formattedEmailDate = emailDate.toISOString().split("T")[0];
+
+                // Compare the formatted email date with the selected date
+                return formattedEmailDate === date;
+              });
+              filteredData
+                ? filteredData
+                : toastr.warning("No emails match the criteria");
+            }
+            // Calculate pagination
+            var totalItems = filteredData.length;
+            var totalPages = Math.ceil(totalItems / pageSize);
+
+            // Update current page if necessary
+            if (currentPage > totalPages) {
+              currentPage = totalPages;
+            }
+
+            // Update email table
+            var emailTable = $("#emailTable tbody");
+            emailTable.empty();
+
+            var startIndex = (currentPage - 1) * pageSize;
+            var endIndex = Math.min(startIndex + pageSize, totalItems);
+
+            for (var i = startIndex; i < endIndex; i++) {
+              var email = filteredData[i];
+              var row = $("<tr></tr>");
+              row.append($("<td></td>").text(email.subject));
+              row.append($("<td></td>").text(email.sender));
+              row.append($("<td>").text(formatDate(email.date)));
+              row.append(
+                $("<td></td>").html(
+                  "<a href='#' class='view-email-link' data-email-id='" +
+                    email.index +
+                    "' data-bs-toggle='modal' data-bs-target='#exampleModal'>Click here to view email</a>"
+                )
+              );
+
+              emailTable.append(row);
+            }
+
+            // Update pagination buttons
+            updatePaginationButtons(totalPages);
+          },
+          error: function () {
+            toastr.warning("Retrieving filtered emails , please wait.....");
+          }
+        });
+      }
+
+      // Function to update pagination buttons
+      function updatePaginationButtons(totalPages) {
+        var paginationContainer = $(".pagination");
+        paginationContainer.empty();
+
+        for (var i = 1; i <= totalPages; i++) {
+          var button = $("<button></button>")
+            .text(i)
+            .addClass("btn btn-primary")
+            .click(function () {
+              currentPage = parseInt($(this).text());
+              loadEmailTable();
+            });
+
+          if (i === currentPage) {
+            button.addClass("active");
+          }
+
+          paginationContainer.append(button);
+        }
+      }
+
+      // Initialize email table
+      loadEmailTable();
+
+      // Search button click event
+      $("#searchButton").click(function () {
+        currentPage = 1;
+        loadEmailTable();
+      });
+    </script>
+    <script>
+      // Handle click event for view email links
+      $(document).on("click", ".view-email-link", function (e) {
+        e.preventDefault();
+        var emailId = $(this).data("email-id");
+        console.log(emailId);
+
+        // Fetch email content by ID
+        $.ajax({
+          url: "data.json",
+          type: "GET",
+          dataType: "json",
+          success: function (data) {
+            console.log(data);
+            // Function to get the value using index
+            function getValueByIndex(data, index) {
+              // Loop through the data
+              for (var i = 0; i < data.length; i++) {
+                if (data[i].index === index) {
+                  return data[i];
+                }
+              }
+            }
+            let emailContent = getValueByIndex(data, emailId);
+            console.log(emailContent);
+            // Open the email modal
+            openEmailModal(emailContent);
+          },
+          error: function () {
+            // Show error message
+            alert("Error fetching email content");
+          }
+        });
+      });
+
+      // Function to open the email modal
+      function openEmailModal(emailContent) {
+        // Display the email content in a modal
+        $("#exampleModal .modal-title").text(emailContent.subject);
+
+        var emailContent = emailContent.detailText;
+        var paragraphs = emailContent.split("\n\n");
+
+        // Check if paragraphs contain commas without an immediate word following it
+        var formattedContent = paragraphs
+          .map(function (paragraph) {
+            // Add line break before paragraphs containing "Regards,"
+            if (paragraph.includes("Regards,")) {
+              paragraph = paragraph.replace("Regards,", "<br>Regards,");
+            }
+            // Add line break after commas without an immediate word following them
+            var sentences = paragraph.split(". ");
+            sentences = sentences.map(function (sentence) {
+              if (sentence.includes(",")) {
+                sentence = sentence.replace(/,(?!\s)/g, ",<br>");
+              }
+              return sentence;
+            });
+            paragraph = sentences.join(". ");
+            return paragraph;
+          })
+          .join("<br><br>");
+
+        // Check if the paragraph starts with "From" and move it to the modal footer
+        var fromIndex = formattedContent.indexOf("From");
+        if (fromIndex === 0) {
+          var fromSentence = formattedContent.split("<br>")[0];
+          formattedContent = formattedContent.replace(
+            fromSentence + "<br>",
+            ""
+          );
+          $(".modal-footer").html(fromSentence);
+        }
+
+        var modalBodyHTML = "";
+        formattedContent.split("<br><br>").forEach(function (paragraph) {
+          modalBodyHTML += "<p>" + paragraph + "</p>";
+        });
+
+        $("#exampleModal .modal-body").html(modalBodyHTML);
+
+        // Open the modal
+        $("#exampleModal").modal("show");
+      }
+    </script>
+    <script>
+      // Function to format date
+      function formatDate(date) {
+        var options = { year: "numeric", month: "short", day: "numeric" };
+        return new Date(date).toLocaleDateString(undefined, options);
+      }
+      $(document).ready(function () {
+        var ionosScriptExecuted = false;
+
+        function showLoadingToast() {
+          toastr.options = {
+            closeButton: true,
+            debug: false,
+            newestOnTop: false,
+            progressBar: true,
+            positionClass: "toast-top-left",
+            preventDuplicates: false,
+            onclick: null,
+            showDuration: "300",
+            hideDuration: "1000",
+            timeOut: "30000", // Set timeOut to 30 seconds
+            extendedTimeOut: "0", // Set extendedTimeOut to 0 for indefinite duration
+            showEasing: "swing",
+            hideEasing: "linear",
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut"
+          };
+          toastr.info("Loading Your Emails ...");
+        }
+
+        function showEmailsLoadedToast() {
+          toastr.options = {
+            closeButton: true,
+            debug: false,
+            newestOnTop: false,
+            progressBar: true,
+            positionClass: "toast-top-left",
+            preventDuplicates: true,
+            onclick: null,
+            showDuration: "300",
+            hideDuration: "10000", // Show for 10 seconds
+            timeOut: "10000",
+            extendedTimeOut: "0",
+            showEasing: "swing",
+            hideEasing: "linear",
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut"
+          };
+          toastr.success("Emails loaded successfully");
+        }
+
+        function showNoEmailsToast() {
+          toastr.options = {
+            closeButton: true,
+            debug: false,
+            newestOnTop: false,
+            progressBar: true,
+            positionClass: "toast-top-left",
+            preventDuplicates: false,
+            onclick: null,
+            showDuration: "300",
+            hideDuration: "10000", // Show for 10 seconds
+            timeOut: "10000",
+            extendedTimeOut: "0",
+            showEasing: "swing",
+            hideEasing: "linear",
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut"
+          };
+          toastr.warning("No emails match the criteria");
+        }
+
+        function showErrorToast() {
+          toastr.options = {
+            closeButton: true,
+            debug: false,
+            newestOnTop: false,
+            progressBar: true,
+            positionClass: "toast-top-left",
+            preventDuplicates: false,
+            onclick: null,
+            showDuration: "300",
+            hideDuration: "10000", // Show for 10 seconds
+            timeOut: "10000",
+            extendedTimeOut: "0",
+            showEasing: "swing",
+            hideEasing: "linear",
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut"
+          };
+          toastr.warning("Retrieving emails.....");
+        }
+
+        showLoadingToast(); // Show loading toast initially
+
+        //get the data from the json file
+        $.getJSON("data.json", function (data) {
+          if (data.length == 0) {
+            showErrorToast();
+            var emailTable = $("#emailTable tbody");
+
+            // Display "Loading..." message
+            emailTable.html(
+              '<tr><td colspan="4" class="text-center">Loading...</td></tr>'
+            );
+            //refresh the page
+            setTimeout(function () {
+              location.reload();
+            }, 30000);
+          } else if (data.length > 0) {
+            showEmailsLoadedToast();
+          } else {
+            showNoEmailsToast();
+          }
+        });
+      });
+    </script>
+    <script>
+      //function to delete authentication.json and data.json
+      function logout() {
+        fetch("/delete-authentication", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+          .then((response) => {
+            if (response.ok) {
+              console.log("authentication.json deleted successfully");
+              //replace logout button with spinner
+              $(".logout").html(
+                '<div class="spinner-border text-danger" role="status"><span class="visually-hidden">Loading...</span></div>'
+              );
+
+              //redirect to login page after deleting authentication.json after 5 seconds
+              setTimeout(function () {
+                window.location.href = "/";
+              }, 5000);
+            }
+          })
+          .catch((error) => {
+            console.error("An error occurred:", error);
+          });
+        fetch("/delete-data", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+          .then((response) => {
+            if (response.ok) {
+              console.log("data.json deleted successfully");
+            }
+          })
+          .catch((error) => {
+            console.error("An error occurred:", error);
+            alert("An error occurred while deleting data.json");
+          });
+      }
+    </script>
+  </body>
+</html>
