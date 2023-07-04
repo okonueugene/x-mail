@@ -191,50 +191,6 @@ const RETRY_DELAY = 3000; // 3 seconds
       const uniqueItems = removeDuplicates(emails);
       console.log(`Total unique emails retrieved: ${uniqueItems.length}`);
 
-      // //Filtering the emails
-      // const filter = JSON.parse(fs.readFileSync("filters.json"));
-      // console.log("Filter data read successfully!");
-
-      // const { start_date, end_date, sender, subject, body, attachment } =
-      //   filter[0];
-      // console.log(filter[0]);
-
-      // const filteredItems = uniqueItems.filter((item) => {
-      //   const date = new Date(item.date);
-      //   const startDate = new Date(start_date);
-      //   const endDate = new Date(end_date);
-
-      //   const isDateInRange =
-      //     date.getTime() >= startDate.getTime() &&
-      //     date.getTime() <= endDate.getTime();
-
-      //   const isSenderMatch = sender
-      //     ? item.sender.toLowerCase().includes(sender.toLowerCase())
-      //     : true;
-
-      //   const isSubjectMatch = subject
-      //     ? item.subject.toLowerCase().includes(subject.toLowerCase())
-      //     : true;
-
-      //   const isBodyMatch = body
-      //     ? item.emailText.toLowerCase().includes(body.toLowerCase())
-      //     : true;
-
-      //   const isAttachmentMatch = attachment
-      //     ? item.attachmentText.toLowerCase().includes(attachment.toLowerCase())
-      //     : true;
-
-      //   return (
-      //     isDateInRange ||
-      //     isSenderMatch ||
-      //     isSubjectMatch ||
-      //     isBodyMatch ||
-      //     isAttachmentMatch
-      //   );
-      // });
-
-      // console.log(`Total filtered emails retrieved: ${filteredItems.length}`);
-
       // Save emails to file data.json
       const data = JSON.stringify(uniqueItems, null, 2);
       fs.writeFileSync("data.json", data);
