@@ -17,6 +17,14 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
     />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <title>Emails</title>
     <style>
       html,
@@ -81,10 +89,16 @@
       .pagination button {
         margin: 0 5px;
       }
-      .pagination button.active {
-        background-color: #0d6efd;
-        color: white;
+
+      .pagination button:hover {
+        background-color: #93b0db;
+        color: #fff;
       }
+      .pagination button:active {
+        background-color: #0dfd49;
+        color: #fff;
+      }
+
       .nk-footer {
         background-color: #232b32;
         color: #fff;
@@ -184,8 +198,19 @@
       <div class="search">
         <input id="subjectInput" type="text" placeholder="Subject" />
         <input id="senderInput" type="text" placeholder="Sender" />
+        <div id="search"></div>
+
         <input id="dateInput" type="date" placeholder="Date" />
-        <button id="searchButton" class="btn btn-muted">Search</button>
+        <!-- Add this div -->
+
+        <button id="searchButton" class="btn btn-success">Search</button>
+        <button
+          id="resetButton"
+          class="btn btn-danger"
+          onclick="location.reload()"
+        >
+          <i class="fa-solid fa-refresh"></i>
+        </button>
       </div>
       <div class="container">
         <table id="emailTable" class="table table-bordered table-hover">
@@ -195,6 +220,7 @@
               <th>Sender</th>
               <th>Date</th>
               <th>Message</th>
+              <th>Attachment</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -231,6 +257,31 @@
         </div>
       </div>
     </div>
+    <div
+      class="modal fade"
+      id="attachmentModal"
+      tabindex="-1"
+      aria-labelledby="attachmentModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="attachmentModalLabel">Attachment</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p id="attachmentText"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="nk-footer">
       <div class="container-fluid">
         <div class="nk-footer-wrap">
@@ -282,7 +333,18 @@
         var subject = $("#subjectInput").val().trim();
         var sender = $("#senderInput").val().trim();
         var date = $("#dateInput").val();
-        console.log(subject, sender, date);
+        var attachmentInput = $("#attachmentInput");
+        var attachment = attachmentInput.val()
+          ? attachmentInput.val().trim()
+          : "";
+        console.log(attachment);
+
+        if (attachment !== undefined) {
+          attachment = attachment.trim(); // Trim the attachment value
+          console.log(attachment);
+        } else {
+          attachment = ""; // Set a default value if attachment is undefined
+        }
 
         // Retrieve filtered emails
         $.ajax({
@@ -293,6 +355,43 @@
             // Apply filters
             var filteredData = data;
 
+            //if there are instances of non-empty attachmentText in filteredData, then show the attachment search bar
+            var attachment = filteredData.filter(function (email) {
+              return email.attachmentText !== "";
+            });
+
+            var searchDiv = $("#search");
+            searchDiv.empty(); // Clear the content of the div before adding the attachment input field
+
+            var attachmentColumn = $("#emailTable thead tr th:nth-child(5)");
+            attachmentColumn.hide(); // Hide the attachment column by default
+
+            if (attachment.length > 0) {
+              searchDiv.append(
+                '<input id="attachmentInput" type="text" placeholder="Attachment" />'
+              );
+
+              // Show the attachment column
+              attachmentColumn.show();
+            }
+
+            // Check if attachment value is provided and valid
+            if (
+              attachment &&
+              typeof attachment === "string" &&
+              attachment.trim().length > 0
+            ) {
+              filteredData = filteredData.filter(function (email) {
+                console.log(email.attachmentText);
+                return email.attachmentText
+                  .toLowerCase()
+                  .includes("cv".toLowerCase());
+              });
+              filteredData.length > 0
+                ? filteredData
+                : toastr.warning("No emails match the criteria");
+            }
+
             if (subject) {
               filteredData = filteredData.filter(function (email) {
                 return email.subject
@@ -300,7 +399,7 @@
                   .includes(subject.toLowerCase());
               });
 
-              filteredData
+              filteredData.length > 0
                 ? filteredData
                 : toastr.warning("No emails match the criteria");
             }
@@ -311,7 +410,8 @@
                   .toLowerCase()
                   .includes(sender.toLowerCase());
               });
-              filteredData
+
+              filteredData.length > 0
                 ? filteredData
                 : toastr.warning("No emails match the criteria");
             }
@@ -325,10 +425,17 @@
                 // Compare the formatted email date with the selected date
                 return formattedEmailDate === date;
               });
-              filteredData
+
+              filteredData.length > 0
                 ? filteredData
                 : toastr.warning("No emails match the criteria");
             }
+
+            //unset all the filters
+            if (!subject && !sender && !date && !attachment) {
+              filteredData = data;
+            }
+
             // Calculate pagination
             var totalItems = filteredData.length;
             var totalPages = Math.ceil(totalItems / pageSize);
@@ -359,14 +466,27 @@
                 )
               );
 
+              // Add attachment column if attachment is present
+              if (email.attachmentText) {
+                row.append(
+                  $("<td></td>").html(
+                    "<a href='#' class='view-attachment-link' data-attachment-text='" +
+                      email.attachmentText +
+                      "' data-bs-toggle='modal' data-bs-target='#attachmentModal'>View Attachment</a>"
+                  )
+                );
+              } else {
+                // Empty div
+                row.append($("<td></td>"));
+              }
+
               emailTable.append(row);
             }
-
             // Update pagination buttons
             updatePaginationButtons(totalPages);
           },
           error: function () {
-            toastr.warning("Retrieving filtered emails , please wait.....");
+            toastr.warning("Retrieving filtered emails, please wait...");
           }
         });
       }
@@ -376,21 +496,46 @@
         var paginationContainer = $(".pagination");
         paginationContainer.empty();
 
-        for (var i = 1; i <= totalPages; i++) {
-          var button = $("<button></button>")
-            .text(i)
-            .addClass("btn btn-primary")
-            .click(function () {
-              currentPage = parseInt($(this).text());
-              loadEmailTable();
-            });
+        var startPage = Math.max(1, currentPage - 3);
+        var endPage = Math.min(startPage + 6, totalPages);
 
-          if (i === currentPage) {
-            button.addClass("active");
-          }
-
-          paginationContainer.append(button);
+        if (endPage - startPage < 6) {
+          startPage = Math.max(1, endPage - 6);
         }
+
+        if (startPage > 1) {
+          paginationContainer.append(createPageButton(1));
+          if (startPage > 2) {
+            paginationContainer.append($("<span></span>").text("..."));
+          }
+        }
+
+        for (var i = startPage; i <= endPage; i++) {
+          paginationContainer.append(createPageButton(i));
+        }
+
+        if (endPage < totalPages) {
+          if (endPage < totalPages - 1) {
+            paginationContainer.append($("<span></span>").text("..."));
+          }
+          paginationContainer.append(createPageButton(totalPages));
+        }
+      }
+
+      function createPageButton(pageNumber) {
+        var button = $("<button></button>")
+          .text(pageNumber)
+          .addClass("btn btn-primary")
+          .click(function () {
+            currentPage = parseInt($(this).text());
+            loadEmailTable();
+          });
+
+        if (pageNumber === currentPage) {
+          button.addClass("active");
+        }
+
+        return button;
       }
 
       // Initialize email table
@@ -442,14 +587,14 @@
         // Display the email content in a modal
         $("#exampleModal .modal-title").text(emailContent.subject);
 
-        var emailContent = emailContent.detailText;
+        var emailContent = emailContent.emailText;
         var paragraphs = emailContent.split("\n\n");
 
         // Check if paragraphs contain commas without an immediate word following it
         var formattedContent = paragraphs
           .map(function (paragraph) {
             // Add line break before paragraphs containing "Regards,"
-            if (paragraph.includes("Regards,")) {
+            if (paragraph.includes("Regards")) {
               paragraph = paragraph.replace("Regards,", "<br>Regards,");
             }
             // Add line break after commas without an immediate word following them
@@ -480,12 +625,74 @@
         formattedContent.split("<br><br>").forEach(function (paragraph) {
           modalBodyHTML += "<p>" + paragraph + "</p>";
         });
+        //append the links in <a> tag and open in new tab when clicked
+        modalBodyHTML = modalBodyHTML.replace(
+          /https:\/\/[^\s<>]+/g,
+          '<a href="$&" target="_blank">$&</a>'
+        );
 
         $("#exampleModal .modal-body").html(modalBodyHTML);
 
         // Open the modal
         $("#exampleModal").modal("show");
       }
+
+      // Handle click event for view attachment links
+      $(document).on("click", ".view-attachment-link", function (e) {
+        e.preventDefault();
+        var attachmentText = $(this).data("attachment-text");
+        var paragraphs = attachmentText.split("\n\n");
+
+        // Check if paragraphs contain commas without an immediate word following it
+        var formattedContent = paragraphs
+          .map(function (paragraph) {
+            // Add line break before paragraphs containing "Regards,"
+            if (paragraph.includes("Regards")) {
+              paragraph = paragraph.replace("Regards,", "<br>Regards,");
+            }
+            // Add line break after commas without an immediate word following them
+            var sentences = paragraph.split(". ");
+            sentences = sentences.map(function (sentence) {
+              if (sentence.includes(",")) {
+                sentence = sentence.replace(/,(?!\s)/g, ",<br>");
+              }
+              return sentence;
+            });
+            paragraph = sentences.join(". ");
+            return paragraph;
+          })
+          .join("<br><br>");
+
+        // Check if the paragraph starts with "From" and move it to the modal footer
+        var fromIndex = formattedContent.indexOf("From");
+        if (fromIndex === 0) {
+          var fromSentence = formattedContent.split("<br>")[0];
+          formattedContent = formattedContent.replace(
+            fromSentence + "<br>",
+            ""
+          );
+          $(".modal-footer").html(fromSentence);
+        }
+
+        var modalBodyHTML = "";
+
+        formattedContent.split("<br><br>").forEach(function (paragraph) {
+          modalBodyHTML += "<p>" + paragraph + "</p>";
+        });
+
+        //append the links in <a> tag and open in new tab when clicked
+
+        modalBodyHTML = modalBodyHTML.replace(
+          /https:\/\/[^\s<>]+/g,
+          '<a href="$&" target="_blank">$&</a>'
+        );
+
+        $("#attachmentModal .modal-body").html(modalBodyHTML);
+
+        // Open the modal
+
+        $("#attachmentModal").modal("show");
+      });
     </script>
     <script>
       // Function to format date
@@ -507,7 +714,7 @@
             onclick: null,
             showDuration: "300",
             hideDuration: "1000",
-            timeOut: "30000", // Set timeOut to 30 seconds
+            timeOut: "60000", // Set timeOut to 30 seconds
             extendedTimeOut: "0", // Set extendedTimeOut to 0 for indefinite duration
             showEasing: "swing",
             hideEasing: "linear",
@@ -646,6 +853,50 @@
             alert("An error occurred while deleting data.json");
           });
       }
+
+      $(document).ready(function () {
+        // Add event listener for search button
+        $("#searchButton").click(function () {
+          currentPage = 1; // Reset current page when performing a new search
+          loadEmailTable();
+        });
+
+        // Add event listener for attachment toggle
+        $("#showAttachments").change(function () {
+          loadEmailTable();
+        });
+      });
+    </script>
+    <script>
+      //logout after 30 minutes of inactivity
+      var timeoutInMiliseconds = 1800000; // 30 minutes
+      var timeoutId;
+
+      function startTimer() {
+        // window.setTimeout returns an Id that can be used to start and stop a timer
+        timeoutId = window.setTimeout(doInactive, timeoutInMiliseconds);
+      }
+
+      function resetTimer() {
+        window.clearTimeout(timeoutId);
+        startTimer();
+      }
+
+      function doInactive() {
+        //logout after 30 minutes of inactivity
+        logout();
+      }
+
+      function setupTimers() {
+        document.addEventListener("mousemove", resetTimer, false);
+        document.addEventListener("mousedown", resetTimer, false);
+        document.addEventListener("keypress", resetTimer, false);
+        document.addEventListener("touchmove", resetTimer, false);
+
+        startTimer();
+      }
+
+      setupTimers();
     </script>
   </body>
 </html>

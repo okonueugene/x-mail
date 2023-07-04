@@ -5,54 +5,124 @@ const RETRY_DELAY = 3000; // 3 seconds
 
 (async () => {
   let retryCount = 0;
+  let continueLoop = true; // Flag to control the loop
 
-  while (retryCount < MAX_RETRIES) {
+  while (retryCount < MAX_RETRIES && continueLoop) {
     try {
-      const browser = await chromium.launch({ headless: true });
+      console.time("Time taken");
+      console.log("Launching browser...");
+      const browser = await chromium.launch({ headless: false });
       const page = await browser.newPage();
       await page.goto("https://email.ionos.com/");
+
       // Read email and password from authentication.json
       const fs = require("fs");
       const auth = JSON.parse(fs.readFileSync("authentication.json"));
-      console.log(auth);
+      console.log("Authentication data read successfully!");
+
       // Extract email and password from the auth object
       const { email, password } = auth[0];
+      console.log("Logging in...");
 
       // Fill in login form
       await page.waitForSelector("#login-form > span:nth-child(3) > label");
       await page.type("#login-form > span:nth-child(3) > label", email);
       await page.type("#login-form-password", password);
       await page.locator("button[type=submit]").click();
+
+      console.log("Logged in successfully!");
       // Wait for email list to load
       await page.waitForSelector(".list-view.visible-selection");
 
       // Extract email information
-      const emailList = await page.$$(".list-item.selectable");
-
       const emails = [];
-      for (const [index, email] of emailList.entries()) {
+
+      const processEmail = async (email, index) => {
         const subject = await email.$eval(".drag-title", (element) =>
           element.innerText.trim()
         );
-        const sender = await email.$eval(".from .person", (element) =>
-          element.innerText.trim()
-        );
+        // Add a check to ensure the element exists before extracting its value
+        const senderElement = await email.$(".from .person");
+        const sender = senderElement
+          ? await senderElement.innerText()
+          : "Sender not found";
         const date = await email.$eval(".date", (element) =>
           element.getAttribute("datetime").trim()
         );
 
         await email.click();
-
-        // Wait for the detail pane to load
         await page.waitForLoadState();
 
         let emailText = "";
+        let attachmentText = "";
+
         try {
           const frameElement = await page.waitForSelector(".mail-detail-frame");
           const frame = await frameElement.contentFrame();
           emailText = await frame.$eval("body", (element) =>
             element.innerText.trim()
           );
+
+          await page.waitForTimeout(1000);
+
+          const hasAttachments = await page.evaluate(() => {
+            const attachments = document.querySelector(
+              ".attachments .toggle-details"
+            );
+            return attachments !== null;
+          });
+          if (hasAttachments) {
+            const attachment = await page.$(".attachments .toggle-details");
+            await attachment.click();
+            await page.waitForLoadState();
+
+            const attachmentList = await page.$$(".inline-items");
+
+            for (const [index, attachment] of attachmentList.entries()) {
+              const attachmentTitle = await attachment.$eval(
+                ".item",
+                (element) => element.getAttribute("title")
+              );
+              await page.waitForLoadState();
+              console.log(attachmentTitle);
+
+              const isResume = (attachmentTitle) => {
+                const resumeWords = [
+                  /cv/i,
+                  /curriculum vitae/i,
+                  /letter/i,
+                  /resume/i,
+                  /vitae/i
+                ];
+                return resumeWords.some((word) => word.test(attachmentTitle));
+              };
+
+              console.log(isResume(attachmentTitle));
+              if (isResume(attachmentTitle)) {
+                const attachmentButton = await attachment.$(".item");
+                await attachmentButton.click();
+                await page.waitForLoadState();
+
+                const viewButton = page.getByRole("menuitem", { name: "View" });
+                await viewButton.click();
+                await page.waitForLoadState();
+
+                await page.waitForSelector(".text-wrapper.user-select-text");
+                const attachmentElement = await page.$(
+                  ".text-wrapper.user-select-text"
+                );
+                attachmentText = await attachmentElement.innerText();
+                await page.waitForTimeout(2000);
+
+                const closeButton = await page.waitForSelector(
+                  "#io-ox-core > div.io-ox-viewer.abs.viewer-dark-theme > div.viewer-toolbar.classic-toolbar-container.align-right > ul > li:nth-child(7) > a"
+                );
+                await closeButton.click();
+                await page.waitForLoadState();
+              }
+            }
+            console.log(attachmentText);
+          }
         } catch (error) {
           console.log(
             `Error occurred while retrieving email text: ${error.message}`
@@ -64,58 +134,117 @@ const RETRY_DELAY = 3000; // 3 seconds
           subject,
           sender,
           date,
-          detailText: emailText
+          emailText,
+          attachmentText: attachmentText || ""
         });
+      };
+
+      const processEmails = async () => {
+        let emailList = await page.$$(".list-item.selectable");
+        let currentIndex = 0;
+        const maxEmails = 400;
+
+        while (emailList.length > currentIndex && currentIndex < maxEmails) {
+          const email = emailList[currentIndex];
+          await processEmail(email, currentIndex);
+          currentIndex++;
+
+          if (currentIndex === emailList.length) {
+            console.log("Getting more emails...");
+            await page.evaluate(() => {
+              const lastEmailElement = document.querySelector(
+                ".list-item.selectable:last-child"
+              );
+              lastEmailElement.scrollIntoView();
+            });
+            await page.waitForTimeout(1000);
+            emailList = await page.$$(".list-item.selectable");
+          }
+        }
+      };
+
+      await processEmails();
+      console.log(`Total emails retrieved: ${emails.length}`);
+
+      // Check for duplicates
+      function removeDuplicates(data) {
+        const uniqueItems = [];
+
+        data.forEach((item) => {
+          const isDuplicate = uniqueItems.some((uniqueItem) => {
+            return (
+              uniqueItem.subject === item.subject &&
+              uniqueItem.sender === item.sender &&
+              uniqueItem.date === item.date &&
+              uniqueItem.detailText === item.detailText
+            );
+          });
+
+          if (!isDuplicate) {
+            uniqueItems.push(item);
+          }
+        });
+
+        return uniqueItems;
       }
 
-      console.log(emails);
+      const uniqueItems = removeDuplicates(emails);
+      console.log(`Total unique emails retrieved: ${uniqueItems.length}`);
 
-      // const filteredEmails = emails.filter((email) => {
-      //   // Read subject and sender from filters.json
-      //   const filters = JSON.parse(fs.readFileSync("filters.json"));
-      //   const { subject, sender } = filters[0];
-      //   console.log(subject, sender);
+      // //Filtering the emails
+      // const filter = JSON.parse(fs.readFileSync("filters.json"));
+      // console.log("Filter data read successfully!");
 
-      //   // Create a regular expression with the sender and subject
-      //   const senderRegex = new RegExp(sender, "i");
-      //   const subjectRegex = new RegExp(subject, "i");
+      // const { start_date, end_date, sender, subject, body, attachment } =
+      //   filter[0];
+      // console.log(filter[0]);
 
-      //   // Check if the sender or subject is an empty string
-      //   const isSubjectEmpty = subject === "";
-      //   const isSenderEmpty = sender === "";
+      // const filteredItems = uniqueItems.filter((item) => {
+      //   const date = new Date(item.date);
+      //   const startDate = new Date(start_date);
+      //   const endDate = new Date(end_date);
 
-      //   // Check if the sender or subject matches the regular expression
-      //   const subjectMatch = isSubjectEmpty
-      //     ? false
-      //     : subjectRegex.test(email.subject);
-      //   const senderMatch = isSenderEmpty
-      //     ? false
-      //     : senderRegex.test(email.sender);
-      //   console.log(subjectMatch, senderMatch);
+      //   const isDateInRange =
+      //     date.getTime() >= startDate.getTime() &&
+      //     date.getTime() <= endDate.getTime();
 
-      //   // Update the email object with the match information
-      //   email.subjectMatch = subjectMatch;
-      //   email.senderMatch = senderMatch;
+      //   const isSenderMatch = sender
+      //     ? item.sender.toLowerCase().includes(sender.toLowerCase())
+      //     : true;
 
-      //   // Return only emails that (email.subjectMatch && email.senderMatch) ||email.subjectMatch ||email.senderMatch
-      //   return (email.subjectMatch && email.senderMatch) || email.subjectMatch;
+      //   const isSubjectMatch = subject
+      //     ? item.subject.toLowerCase().includes(subject.toLowerCase())
+      //     : true;
+
+      //   const isBodyMatch = body
+      //     ? item.emailText.toLowerCase().includes(body.toLowerCase())
+      //     : true;
+
+      //   const isAttachmentMatch = attachment
+      //     ? item.attachmentText.toLowerCase().includes(attachment.toLowerCase())
+      //     : true;
+
+      //   return (
+      //     isDateInRange ||
+      //     isSenderMatch ||
+      //     isSubjectMatch ||
+      //     isBodyMatch ||
+      //     isAttachmentMatch
+      //   );
       // });
 
-      // console.log(filteredEmails);
+      // console.log(`Total filtered emails retrieved: ${filteredItems.length}`);
 
-      // Write filtered emails to data.json file
-      const jsonData = JSON.stringify(emails, null, 2);
-      fs.writeFile("data.json", jsonData, { flag: "w" }, (err) => {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log("Data saved successfully!");
-        }
-      });
-      var ionosScriptExecuted = true;
+      // Save emails to file data.json
+      const data = JSON.stringify(uniqueItems, null, 2);
+      fs.writeFileSync("data.json", data);
+      console.log("Data saved successfully!");
 
+      // Close the browser
       await browser.close();
-      break;
+      console.log("Browser closed successfully!");
+      console.timeEnd("Time taken");
+      continueLoop = false;
     } catch (error) {
       console.log(`Error occurred: ${error.message}`);
       retryCount++;
