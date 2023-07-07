@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Filters</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="icon"
+      href="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.dribbble.com%2Fusers%2F68544%2Fscreenshots%2F14608295%2Fx-dr_4x.png&f=1&nofb=1&ipt=962d98ea3bcaa1332dcf01c9e64150783c391bbfd291a0f46716559408f8aba3&ipo=images"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+    />
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        /* background-image: url("https://images.pexels.com/photos/1097456/pexels-photo-1097456.jpeg?auto=compress&cs=tinysrgb&w=1600"); */
+        background: rgb(20, 20, 20);
+      }
+
+      .container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #232b32;
+      }
+      .row-header {
+        background: #232b32;
+        padding: 10px;
+        position: absolute;
+        top: 17%;
+      }
+      body > div > div.row-header > div > img {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        margin: 0 auto;
+        display: block;
+        position: absolute;
+        top: -100px;
+      }
+      .form-label {
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <form id="filtersForm" style="width: 22rem">
+        <!-- [
+  {
+    "start_date": "2023-04-01",
+    "end_date": "2023-06-31",
+    "sender": "a",
+    "subject": "Contract",
+    "body": "Contract",
+    "attachment": "pdf,docx,xlsx,pptx,txt,doc"
+  }
+] -->
+        <div class="form-outline mb-4">
+          <label class="form-label" for="startDate">Start Date</label>
+          <input type="date" id="startDate" class="form-control" />
+        </div>
+        <div class="form-outline mb-4">
+          <label class="form-label" for="endDate">End Date</label>
+          <input type="date" id="endDate" class="form-control" />
+        </div>
+        <div class="form-outline mb-4">
+          <label class="form-label" for="sender">Sender</label>
+          <input type="text" id="sender" class="form-control" />
+        </div>
+        <div class="form-outline mb-4">
+          <label class="form-label" for="subject">Subject</label>
+          <input type="text" id="subject" class="form-control" />
+        </div>
+        <div class="form-outline mb-4">
+          <label class="form-label" for="body">Body</label>
+          <input type="text" id="body" class="form-control" />
+        </div>
+        <div class="form-outline mb-4">
+          <label class="form-label" for="attachment">Attachment</label>
+          <input type="text" id="attachment" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block mb-4 float-end">
+          Submit
+        </button>
+      </form>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const filtersForm = document.getElementById("filtersForm");
+        filtersForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const startDate = document.getElementById("startDate").value;
+          const endDate = document.getElementById("endDate").value;
+          const sender = document.getElementById("sender").value;
+          const subject = document.getElementById("subject").value;
+          const body = document.getElementById("body").value;
+          const attachment = document.getElementById("attachment").value;
+
+          const filters = {
+            start_date: startDate,
+            end_date: endDate,
+            sender: sender,
+            subject: subject,
+            body: body,
+            attachment: attachment
+          };
+          const jsonData = JSON.stringify([filters], null, 2);
+
+          const response = await fetch("/save-filters", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: jsonData
+          });
+
+          if (response.status === 200) {
+            toastr.success("Filters saved successfully");
+            // Execute ionos.js script via GET request
+            fetch("/execute-ionos")
+              .then((response) => {
+                if (response.ok) {
+                  console.log("ionos.js executed successfully");
+                } else {
+                  console.error("Failed to execute ionos.js");
+                }
+              })
+              .catch((error) => {
+                console.error("An error occurred:", error);
+                alert("An error occurred while executing ionos.js");
+              });
+            //execute post request to empty data.json
+            fetch("/delete-data", {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json"
+              }
+            })
+              .then((response) => {
+                if (response.ok) {
+                  // Redirect to the emails page after ionos script execution
+                  window.location.href = "/emails";
+                }
+              })
+              .catch((error) => {
+                console.error("An error occurred:", error);
+                alert("An error occurred while deleting data.json");
+              });
+          } else {
+            toastr.error("Error saving filters");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

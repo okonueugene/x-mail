@@ -13,6 +13,10 @@ app.get("/", (req, res) => {
 app.get("/emails", (req, res) => {
   res.sendFile(path.join(__dirname, "emails.html"));
 });
+
+app.get("/filters", (req, res) => {
+  res.sendFile(path.join(__dirname, "filters.html"));
+});
 // Parse JSON bodies
 app.use(bodyParser.json());
 //use fs module
@@ -33,6 +37,22 @@ app.post("/save-authentication", (req, res) => {
     }
   });
 });
+
+//Route to Write filters to filters.json
+app.post("/save-filters", (req, res) => {
+  const jsonData = JSON.stringify(req.body, null, 2); // Convert the JSON data to a string
+
+  // Write JSON data to filters.json or create the file if it doesn't exist
+  fs.writeFile("filters.json", jsonData, { flag: "w" }, (err) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send("An error occurred while saving filters data.");
+    } else {
+      res.send("Filters data saved successfully!");
+    }
+  });
+});
+
 // Route to execute ionos.js
 app.get("/execute-ionos", (req, res) => {
   const { spawn } = require("child_process");

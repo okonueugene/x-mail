@@ -11,7 +11,7 @@ const RETRY_DELAY = 3000; // 3 seconds
     try {
       console.time("Time taken");
       console.log("Launching browser...");
-      const browser = await chromium.launch({ headless: false });
+      const browser = await chromium.launch({ headless: true });
       const page = await browser.newPage();
       await page.goto("https://email.ionos.com/");
 
@@ -121,13 +121,13 @@ const RETRY_DELAY = 3000; // 3 seconds
                 await page.waitForLoadState();
               }
             }
-            console.log(attachmentText);
           }
         } catch (error) {
           console.log(
             `Error occurred while retrieving email text: ${error.message}`
           );
         }
+        console.log(attachmentText);
 
         emails.push({
           index,
@@ -166,6 +166,36 @@ const RETRY_DELAY = 3000; // 3 seconds
       await processEmails();
       console.log(`Total emails retrieved: ${emails.length}`);
 
+      // Read filters from filters.json
+      const filters = JSON.parse(fs.readFileSync("filters.json"));
+
+      // Apply filters to the emails array
+      const filteredEmails = emails.filter((email) => {
+        return filters.some((filter) => {
+          const startDate = new Date(filter.start_date);
+          const endDate = new Date(filter.end_date);
+          const emailDate = new Date(email.date);
+
+          // Create regular expressions for filter criteria
+          const senderRegex = new RegExp(filter.sender, "i");
+          const subjectRegex = new RegExp(filter.subject, "i");
+          const bodyRegex = new RegExp(filter.body, "i");
+          const attachmentRegex = new RegExp(filter.attachment, "i");
+
+          // Check if email matches the filter criteria, including the date range
+          return (
+            emailDate >= startDate &&
+            emailDate <= endDate &&
+            (senderRegex.test(email.sender) ||
+              subjectRegex.test(email.subject) ||
+              bodyRegex.test(email.emailText) ||
+              attachmentRegex.test(email.attachmentText))
+          );
+        });
+      });
+
+      console.log(`Total filtered emails: ${filteredEmails.length}`);
+
       // Check for duplicates
       function removeDuplicates(data) {
         const uniqueItems = [];
@@ -188,13 +218,11 @@ const RETRY_DELAY = 3000; // 3 seconds
         return uniqueItems;
       }
 
-      const uniqueItems = removeDuplicates(emails);
-      console.log(`Total unique emails retrieved: ${uniqueItems.length}`);
+      const uniqueEmails = removeDuplicates(filteredEmails);
+      console.log(`Total unique emails: ${uniqueEmails.length}`);
 
-      // Save emails to file data.json
-      const data = JSON.stringify(uniqueItems, null, 2);
-      fs.writeFileSync("data.json", data);
-      console.log("Data saved successfully!");
+      // Save the emails to data.json
+      fs.writeFileSync("data.json", JSON.stringify(uniqueEmails, null, 2));
 
       // Close the browser
       await browser.close();
