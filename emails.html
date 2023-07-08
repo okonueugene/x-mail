@@ -321,6 +321,7 @@
       // Pagination variables
       var pageSize = 10; // Number of items per page
       var currentPage = 1; // Current page number
+      var refreshCount = sessionStorage.getItem("refreshCount") || 0;
 
       // Function to format date
       function formatDate(date) {
@@ -489,6 +490,10 @@
             toastr.warning("Retrieving filtered emails, please wait...");
           }
         });
+
+        refreshCount++;
+
+        sessionStorage.setItem("refreshCount", refreshCount);
       }
 
       // Function to update pagination buttons
@@ -784,7 +789,25 @@
             showMethod: "fadeIn",
             hideMethod: "fadeOut"
           };
-          toastr.warning("Retrieving emails.....");
+          console.log(refreshCount);
+
+          if (refreshCount < 5) {
+            toastr.warning("Retrieving emails.....");
+          } else if (refreshCount >= 5 && refreshCount < 10) {
+            toastr.warning("Please be patient while we retrieve emails.....");
+          } else if (refreshCount >= 10 && refreshCount < 20) {
+            toastr.warning("Hold on while we try and hack the emails.....");
+          } else {
+            toastr.error("An error occurred while retrieving emails");
+            //reset the refreshCount
+            sessionStorage.setItem("refreshCount", 0);
+          }
+
+          // if (refreshCount >= 5) {
+          // }
+
+          // if (refreshCount >= 10) {
+          // }
         }
 
         showLoadingToast(); // Show loading toast initially
